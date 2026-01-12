@@ -1,9 +1,12 @@
 const jwt = require('jsonwebtoken');
 const User = require('../data/models/User');
 
+const JWT_DEFAULT_EXPIRES_IN = '1d';
+
 const generateToken = (userId) => {
+  const expiresIn = process.env.JWT_EXPIRES_IN || JWT_DEFAULT_EXPIRES_IN;
   return jwt.sign({ userId }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN
+    expiresIn
   });
 };
 
