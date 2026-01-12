@@ -155,8 +155,7 @@ exports.gerarPDFPedido = async (req, res) => {
 
         const totaisY = y + 20;
 
-        const ipi = valorTotalProdutos * 0.065;
-        const valorTotal = valorTotalProdutos + ipi;
+        const valorTotal = valorTotalProdutos;
 
         const totalsLeft = 350;
         const totalsWidth = 200;
@@ -181,7 +180,6 @@ exports.gerarPDFPedido = async (req, res) => {
         addTotalLine('Total (Preco Tabela):', `R$ ${valorTotalProdutos.toFixed(2)}`);
         addTotalLine('Total de Descontos:', 'R$ 0,00');
         addTotalLine('Valor total em produtos:', `R$ ${valorTotalProdutos.toFixed(2)}`);
-        addTotalLine('Valor total em IPI:', `R$ ${ipi.toFixed(2)}`);
 
         doc.fontSize(10).font('Helvetica-Bold');
         addTotalLine('Valor total:', `R$ ${valorTotal.toFixed(2)}`);
