@@ -40,7 +40,6 @@ exports.gerarPDFPedido = async (req, res) => {
             { label: 'Codigo', x: 70, width: 45, align: 'left' },
             { label: 'Produto', x: 120, width: 145, align: 'left' },
             { label: 'Qtde.', x: 270, width: 40, align: 'right' },
-            { label: 'Preco Tabela', x: 320, width: 65, align: 'right' },
             { label: 'Preco Liquido', x: 390, width: 65, align: 'right' },
             { label: 'Preco c/ Impostos', x: 460, width: 70, align: 'right' },
             { label: 'Subtotal', x: 535, width: 35, align: 'right' }
@@ -177,7 +176,6 @@ exports.gerarPDFPedido = async (req, res) => {
         addTotalLine('Qtde. Total:', quantidadeTotal.toFixed(2));
         addTotalLine('Qtde. volumes:', '0 Vol');
         addTotalLine('Peso bruto total:', `${(quantidadeTotal * 17).toFixed(3)} kg`);
-        addTotalLine('Total (Preco Tabela):', `R$ ${valorTotalProdutos.toFixed(2)}`);
         addTotalLine('Total de Descontos:', 'R$ 0,00');
         addTotalLine('Valor total em produtos:', `R$ ${valorTotalProdutos.toFixed(2)}`);
 
