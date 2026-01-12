@@ -40,9 +40,9 @@ exports.gerarPDFPedido = async (req, res) => {
             { label: 'Codigo', x: 70, width: 45, align: 'left' },
             { label: 'Produto', x: 120, width: 145, align: 'left' },
             { label: 'Qtde.', x: 270, width: 40, align: 'right' },
+            { label: 'Preco Tabela', x: 320, width: 65, align: 'right' },
             { label: 'Preco Liquido', x: 390, width: 65, align: 'right' },
-            { label: 'Preco c/ Impostos', x: 460, width: 70, align: 'right' },
-            { label: 'Subtotal', x: 535, width: 35, align: 'right' }
+            { label: 'Subtotal', x: 460, width: 90, align: 'right' }
         ];
 
         const drawTableHeader = (yPos) => {
@@ -111,8 +111,7 @@ exports.gerarPDFPedido = async (req, res) => {
                 const quantidade = Number(item.quantidade) || 0;
                 const precoTabela = Number(item.preco_unitario) || 0;
                 const precoLiquido = precoTabela;
-                const precoComImpostos = precoTabela * 1.234; // aproximacao para impostos
-                const subtotal = quantidade * precoComImpostos;
+                const subtotal = quantidade * precoLiquido;
 
                 const produtoNome = item.produto_nome || 'Produto';
                 const produtoAltura = doc.heightOfString(produtoNome, { width: 145 });
@@ -135,8 +134,7 @@ exports.gerarPDFPedido = async (req, res) => {
                 doc.text(`${quantidade.toFixed(2)} ${item.unidade_medida || 'MT'}`, 270, y, { width: 40, align: 'right' });
                 doc.text(`R$ ${precoTabela.toFixed(2)}`, 320, y, { width: 65, align: 'right' });
                 doc.text(`R$ ${precoLiquido.toFixed(2)}`, 390, y, { width: 65, align: 'right' });
-                doc.text(`R$ ${precoComImpostos.toFixed(2)}`, 460, y, { width: 70, align: 'right' });
-                doc.text(`R$ ${subtotal.toFixed(2)}`, 535, y, { width: 35, align: 'right' });
+                doc.text(`R$ ${subtotal.toFixed(2)}`, 460, y, { width: 90, align: 'right' });
 
                 y += rowHeight + 4;
                 itemNumber++;
@@ -176,6 +174,7 @@ exports.gerarPDFPedido = async (req, res) => {
         addTotalLine('Qtde. Total:', quantidadeTotal.toFixed(2));
         addTotalLine('Qtde. volumes:', '0 Vol');
         addTotalLine('Peso bruto total:', `${(quantidadeTotal * 17).toFixed(3)} kg`);
+        addTotalLine('Total (Preco Tabela):', `R$ ${valorTotalProdutos.toFixed(2)}`);
         addTotalLine('Total de Descontos:', 'R$ 0,00');
         addTotalLine('Valor total em produtos:', `R$ ${valorTotalProdutos.toFixed(2)}`);
 
