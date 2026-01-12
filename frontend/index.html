@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Icebound foods ERP - Sistema de Gestão</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-chart-line"></i> Icebound foods</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#" class="nav-item active" data-page="dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
+                    <li><a href="#" class="nav-item" data-page="pedidos"><i class="fas fa-shopping-cart"></i> Pedidos</a></li>
+                    <li><a href="#" class="nav-item" data-page="clientes"><i class="fas fa-users"></i> Clientes</a></li>
+                    <li><a href="#" class="nav-item" data-page="produtos"><i class="fas fa-boxes"></i> Produtos</a></li>
+                    <li><a href="#" class="nav-item" data-page="vendedores"><i class="fas fa-user-tie"></i> Vendedores</a></li>
+                    <li><a href="#" class="nav-item" data-page="relatorios"><i class="fas fa-chart-bar"></i> Relatórios</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <img src="https://ui-avatars.com/api/?name=Usuario&background=0D8ABC&color=fff" alt="Usuário">
+                    <div class="user-details">
+                        <span class="user-name">Usuário</span>
+                        <span class="user-role">Vendedor</span>
+                    </div>
+                </div>
+                <button class="logout-btn"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+
+        <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <div class="top-bar-left">
+                    <button class="menu-toggle" id="menuToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 id="pageTitle">Dashboard</h1>
+                </div>
+                <div class="top-bar-right">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Buscar..." id="globalSearch">
+                    </div>
+                    <div class="notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge" id="notificationBadge">0</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="page-content">
+                <!-- Dashboard Page -->
+                <div id="dashboard" class="page active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon sales">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>R$ 45.230,00</h3>
+                                <p>Vendas do Mês</p>
+                                <span class="stat-trend positive">+12%</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon orders">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>28</h3>
+                                <p>Pedidos Ativos</p>
+                                <span class="stat-trend positive">+8%</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon clients">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>156</h3>
+                                <p>Clientes Ativos</p>
+                                <span class="stat-trend positive">+5%</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon products">
+                                <i class="fas fa-box-open"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>12</h3>
+                                <p>Estoque Baixo</p>
+                                <span class="stat-trend negative">-3%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="content-grid">
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h3>Vendas Mensais</h3>
+                                <select class="chart-filter" id="chartPeriod">
+                                    <option value="6">Últimos 6 meses</option>
+                                    <option value="12">Este ano</option>
+                                </select>
+                            </div>
+                            <div class="chart-placeholder">
+                                <canvas id="salesChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="recent-orders">
+                            <div class="section-header">
+                                <h3>Pedidos Recentes</h3>
+                                <a href="#" class="view-all" data-page="pedidos">Ver todos</a>
+                            </div>
+                            <div class="orders-list" id="recentOrdersList">
+                                <!-- Carregado via JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pedidos Page -->
+                <div id="pedidos" class="page">
+                    <div class="page-header">
+                        <h2>Gerenciar Pedidos</h2>
+                        <button class="btn btn-primary" id="novoPedidoBtn">
+                            <i class="fas fa-plus"></i> Novo Pedido
+                        </button>
+                    </div>
+
+                    <div class="filters-bar">
+                        <div class="filter-group">
+                            <label>Status:</label>
+                            <select id="statusFilter">
+                                <option value="">Todos</option>
+                                <option value="pendente">Pendente</option>
+                                <option value="aprovado">Aprovado</option>
+                                <option value="faturado">Faturado</option>
+                                <option value="cancelado">Cancelado</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Data:</label>
+                            <input type="date" id="dateFilter">
+                        </div>
+                        <div class="filter-group">
+                            <label>Vendedor:</label>
+                            <select id="vendedorFilter">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-secondary" id="clearFilters">
+                            <i class="fas fa-times"></i> Limpar
+                        </button>
+                    </div>
+
+                    <div class="table-container">
+                        <table id="pedidosTable">
+                            <thead>
+                                <tr>
+                                    <th>Nº Pedido</th>
+                                    <th>Cliente</th>
+                                    <th>Vendedor</th>
+                                    <th>Data</th>
+                                    <th>Valor Total</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pedidosTableBody">
+                                <!-- Carregado via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pagination">
+                        <button class="pagination-btn" id="prevPage">Anterior</button>
+                        <span class="page-info" id="pageInfo">Página 1 de 1</span>
+                        <button class="pagination-btn" id="nextPage">Próxima</button>
+                    </div>
+                </div>
+
+                <!-- Clientes Page -->
+                <div id="clientes" class="page">
+                    <div class="page-header">
+                        <h2>Gerenciar Clientes</h2>
+                        <button class="btn btn-primary" id="novoClienteBtn">
+                            <i class="fas fa-plus"></i> Novo Cliente
+                        </button>
+                    </div>
+
+                    <div class="filters-bar">
+                        <div class="filter-group">
+                            <label>Status:</label>
+                            <select id="clienteStatusFilter">
+                                <option value="">Todos</option>
+                                <option value="ativo">Ativos</option>
+                                <option value="inativo">Inativos</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Cidade:</label>
+                            <input type="text" id="cidadeFilter" placeholder="Filtrar por cidade">
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table id="clientesTable">
+                            <thead>
+                                <tr>
+                                    <th>CNPJ/CPF</th>
+                                    <th>Nome Fantasia</th>
+                                    <th>Cidade/UF</th>
+                                    <th>Telefone</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clientesTableBody">
+                                <!-- Carregado via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Produtos Page -->
+                <div id="produtos" class="page">
+                    <div class="page-header">
+                        <h2>Gerenciar Produtos</h2>
+                        <button class="btn btn-primary" id="novoProdutoBtn">
+                            <i class="fas fa-plus"></i> Novo Produto
+                        </button>
+                    </div>
+
+                    <div class="table-container">
+                        <table id="produtosTable">
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Produto</th>
+                                    <th>Descrição</th>
+                                    <th>Preço</th>
+                                    <th>Estoque</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="produtosTableBody">
+                                <!-- Carregado via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Vendedores Page -->
+                <div id="vendedores" class="page">
+                    <div class="page-header">
+                        <h2>Gerenciar Vendedores</h2>
+                        <button class="btn btn-primary" id="novoVendedorBtn">
+                            <i class="fas fa-plus"></i> Novo Vendedor
+                        </button>
+                    </div>
+
+                    <div class="table-container">
+                        <table id="vendedoresTable">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Email</th>
+                                    <th>Telefone</th>
+                                    <th>Comissão</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vendedoresTableBody">
+                                <!-- Carregado via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Relatórios Page -->
+                <div id="relatorios" class="page">
+                    <div class="page-header">
+                        <h2>Relatórios</h2>
+                        <button class="btn btn-primary" id="generateReportsPdfBtn">
+                            <i class="fas fa-file-pdf"></i> Gerar PDF
+                        </button>
+                    </div>
+
+                    <div class="reports-grid">
+                        <div class="report-card">
+                            <div class="report-icon">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <h3>Relatório de Vendas</h3>
+                            <p>Análise detalhada das vendas por período</p>
+                            <button class="btn btn-primary" onclick="generateSalesReport()">
+                                Gerar Relatório
+                            </button>
+                        </div>
+
+                        <div class="report-card">
+                            <div class="report-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <h3>Relatório de Clientes</h3>
+                            <p>Clientes ativos e histórico de compras</p>
+                            <button class="btn btn-primary" onclick="generateClientsReport()">
+                                Gerar Relatório
+                            </button>
+                        </div>
+
+                        <div class="report-card">
+                            <div class="report-icon">
+                                <i class="fas fa-boxes"></i>
+                            </div>
+                            <h3>Relatório de Estoque</h3>
+                            <p>Posição de estoque e produtos críticos</p>
+                            <button class="btn btn-primary" onclick="generateStockReport()">
+                                Gerar Relatório
+                            </button>
+                        </div>
+
+                        <div class="report-card">
+                            <div class="report-icon">
+                                <i class="fas fa-file-invoice-dollar"></i>
+                            </div>
+                            <h3>Relatório Financeiro</h3>
+                            <p>Fluxo de caixa e contas a receber</p>
+                            <button class="btn btn-primary" onclick="generateFinancialReport()">
+                                Gerar Relatório
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Novo Pedido -->
+    <div id="pedidoModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Novo Pedido</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="pedido-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="clienteSelect">Cliente *</label>
+                            <select id="clienteSelect" required>
+                                <option value="">Selecione um cliente</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="condicaoPagamento">Condição de Pagamento</label>
+                            <input type="text" id="condicaoPagamento" value="28,42,56,70,84,98,112,126,140,154">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="observacoesPedido">Observações</label>
+                        <textarea id="observacoesPedido" rows="3" placeholder="Observações adicionais..."></textarea>
+                    </div>
+
+                    <div class="itens-pedido">
+                        <h4>Itens do Pedido</h4>
+                        <div class="table-container">
+                            <table id="itensPedidoTable">
+                                <thead>
+                                    <tr>
+                                        <th>Produto</th>
+                                        <th>Quantidade</th>
+                                        <th>Preço Unit.</th>
+                                        <th>Desconto %</th>
+                                        <th>Subtotal</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itensPedidoBody">
+                                    <!-- Itens serão adicionados dinamicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <button type="button" class="btn btn-secondary" id="addItemBtn">
+                            <i class="fas fa-plus"></i> Adicionar Item
+                        </button>
+                    </div>
+
+                    <div class="pedido-totais">
+                        <div class="total-line">
+                            <span>Quantidade Total:</span>
+                            <span id="totalQuantidade">0,00 MT</span>
+                        </div>
+                        <div class="total-line">
+                            <span>Valor Total Produtos:</span>
+                            <span id="totalProdutos">R$ 0,00</span>
+                        </div>
+                        <div class="total-line">
+                            <span>Descontos:</span>
+                            <span id="totalDescontos">R$ 0,00</span>
+                        </div>
+                        <div class="total-line">
+                            <span>IPI (6.5%):</span>
+                            <span id="totalIPI">R$ 0,00</span>
+                        </div>
+                        <div class="total-line grand-total">
+                            <span>Valor Total:</span>
+                            <span id="valorTotal">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelPedido">Cancelar</button>
+                <button class="btn btn-primary" id="savePedido">Salvar Pedido</button>
+                <button class="btn btn-success" id="generatePDFBtn">Gerar PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Novo Cliente -->
+    <div id="clienteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Novo Cliente</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="clienteForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="clienteCNPJ">CNPJ/CPF</label>
+                            <input type="text" id="clienteCNPJ" placeholder="00.000.000/0000-00">
+                        </div>
+                        <div class="form-group">
+                            <label for="clienteIE">Inscrição Estadual</label>
+                            <input type="text" id="clienteIE" placeholder="Inscrição Estadual">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="clienteRazaoSocial">Razão Social *</label>
+                        <input type="text" id="clienteRazaoSocial" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="clienteNomeFantasia">Nome Fantasia *</label>
+                        <input type="text" id="clienteNomeFantasia" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="clienteEmail">Email</label>
+                            <input type="email" id="clienteEmail" placeholder="email@empresa.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="clienteTelefone">Telefone</label>
+                            <input type="text" id="clienteTelefone" placeholder="(11) 99999-9999">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="clienteEndereco">Endereço</label>
+                        <input type="text" id="clienteEndereco" placeholder="Rua, número, bairro">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="clienteCidade">Cidade</label>
+                            <input type="text" id="clienteCidade">
+                        </div>
+                        <div class="form-group">
+                            <label for="clienteEstado">Estado</label>
+                            <select id="clienteEstado">
+                                <option value="">Selecione</option>
+                                <option value="SP">SP</option>
+                                <option value="RJ">RJ</option>
+                                <option value="MG">MG</option>
+                                <option value="RS">RS</option>
+                                <option value="PR">PR</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="clienteCEP">CEP</label>
+                            <input type="text" id="clienteCEP" placeholder="00000-000">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelCliente">Cancelar</button>
+                <button class="btn btn-primary" id="saveCliente">Salvar Cliente</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Novo Produto -->
+    <div id="produtoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="produtoModalTitle">Novo Produto</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="produtoForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="produtoCodigo">Código *</label>
+                            <input type="text" id="produtoCodigo" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="produtoNome">Nome *</label>
+                            <input type="text" id="produtoNome" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="produtoDescricao">Descrição</label>
+                        <input type="text" id="produtoDescricao" placeholder="Descrição do produto">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="produtoPrecoTabela">Preço de Tabela *</label>
+                            <input type="number" id="produtoPrecoTabela" step="0.01" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="produtoPrecoCusto">Preço de Custo</label>
+                            <input type="number" id="produtoPrecoCusto" step="0.01" min="0">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="produtoEstoqueAtual">Estoque Atual</label>
+                            <input type="number" id="produtoEstoqueAtual" step="0.01" min="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="produtoEstoqueMinimo">Estoque Mínimo</label>
+                            <input type="number" id="produtoEstoqueMinimo" step="0.01" min="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="produtoUnidade">Unidade</label>
+                            <select id="produtoUnidade">
+                                <option value="UN">UN</option>
+                                <option value="MT">MT</option>
+                                <option value="KG">KG</option>
+                                <option value="LT">LT</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="produtoAtivo" checked>
+                            Ativo
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelProduto">Cancelar</button>
+                <button class="btn btn-primary" id="saveProduto">Salvar Produto</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Novo Vendedor -->
+    <div id="vendedorModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Novo Vendedor</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="vendedorForm">
+                    <div class="form-group">
+                        <label for="vendedorNome">Nome *</label>
+                        <input type="text" id="vendedorNome" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="vendedorEmail">Email *</label>
+                        <input type="email" id="vendedorEmail" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="vendedorTelefone">Telefone</label>
+                            <input type="text" id="vendedorTelefone" placeholder="(11) 99999-9999">
+                        </div>
+                        <div class="form-group">
+                            <label for="vendedorNivel">Nivel de acesso</label>
+                            <select id="vendedorNivel">
+                                <option value="vendedor">Vendedor</option>
+                                <option value="admin">Administrador</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="vendedorComissao">Comissao (%)</label>
+                            <input type="number" id="vendedorComissao" step="0.01" min="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="vendedorSenha">Senha *</label>
+                            <input type="password" id="vendedorSenha" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="vendedorAtivo" checked>
+                            Ativo
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelVendedor">Cancelar</button>
+                <button class="btn btn-primary" id="saveVendedor">Salvar Vendedor</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="script.js"></script>
+    <script src="config.js"></script>
+</body>
+</html>

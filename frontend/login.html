@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Icebound foods ERP</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #FF9A3C 0%, #E53935 100%);
+
+            padding: 20px;
+        }
+
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .login-header p {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-login:hover {
+            background: #2980b9;
+            transform: translateY(-1px);
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .login-footer a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .login-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .demo-credentials {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 0.8rem;
+        }
+
+        .demo-credentials h4 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+            font-size: 0.9rem;
+        }
+
+        .demo-credentials p {
+            margin: 5px 0;
+            color: #7f8c8d;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1><i class="fas fa-chart-line"></i>Icebound foods</h1>
+                <p>Sistema de Gestão Comercial</p>
+            </div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" class="form-control" placeholder="seu@email.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" class="form-control" placeholder="Sua senha">
+                </div>
+
+                <button type="submit" class="btn-login">
+                    <i class="fas fa-sign-in-alt"></i> Entrar
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <a href="https://wa.me//+5517996685518">↪ Sem acesso? Solicite aqui</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="login.js"></script>
+    
+</body>
+</html>
