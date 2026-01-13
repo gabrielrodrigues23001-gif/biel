@@ -9,6 +9,7 @@ const {
 const SHEET_CONFIG = {
   clientes: [
     'id',
+    'vendedor_id',
     'cnpj',
     'razao_social',
     'nome_fantasia',
