@@ -805,13 +805,26 @@ function updateRecentOrders(pedidos) {
 async function loadClientes() {
     try {
         const data = await apiCall('/clientes');
-        state.clientes = data.clientes;
-        updateClientesTable(state.clientes);
-        updateClienteSelect(state.clientes);
+        const clientes = Array.isArray(data.clientes) ? data.clientes : [];
+        const visibleClientes = filterClientesByUser(clientes);
+        state.clientes = visibleClientes;
+        updateClientesTable(visibleClientes);
+        updateClienteSelect(visibleClientes);
     } catch (error) {
         console.error('Erro ao carregar clientes:', error);
         showError('Erro ao carregar clientes: ' + error.message);
     }
+}
+
+function filterClientesByUser(clientes) {
+    if (state.currentUser?.nivel_acesso === 'admin') {
+        return clientes;
+    }
+    if (state.currentUser?.nivel_acesso === 'vendedor') {
+        const userId = Number(state.currentUser.id);
+        return clientes.filter((cliente) => Number(cliente.vendedor_id) === userId);
+    }
+    return clientes;
 }
 
 function updateClientesTable(clientes) {
