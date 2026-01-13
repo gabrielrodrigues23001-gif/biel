@@ -11,6 +11,7 @@ function normalizeCliente(row) {
   if (!row) return null;
   return {
     id: Number(row.id),
+    vendedor_id: row.vendedor_id ? Number(row.vendedor_id) : null,
     cnpj: row.cnpj || null,
     razao_social: row.razao_social || '',
     nome_fantasia: row.nome_fantasia || '',
@@ -41,6 +42,7 @@ class Cliente {
     const now = new Date().toISOString();
     const payload = {
       id,
+      vendedor_id: clienteData.vendedor_id ?? '',
       cnpj: clienteData.cnpj || '',
       razao_social: clienteData.razao_social || '',
       nome_fantasia: clienteData.nome_fantasia || '',
@@ -70,6 +72,10 @@ class Cliente {
     return normalizeCliente(row);
   }
 
+  static async findRowById(id) {
+    return findById('clientes', id);
+  }
+
   static async update(id, clienteData) {
     const row = await findById('clientes', id);
     if (!row) return null;
@@ -85,11 +91,16 @@ class Cliente {
     return { id: Number(id), ...clienteData };
   }
 
-  static async delete(id) {
-    const row = await findById('clientes', id);
-    if (!row) return { deleted: false };
-    await deleteRow('clientes', row.__rowNumber);
+  static async deleteByRowNumber(rowNumber) {
+    if (!rowNumber) return { deleted: false };
+    await deleteRow('clientes', rowNumber);
     return { deleted: true };
+  }
+
+  static async delete(id) {
+    const row = await Cliente.findRowById(id);
+    if (!row) return { deleted: false };
+    return Cliente.deleteByRowNumber(row.__rowNumber);
   }
 }
 
