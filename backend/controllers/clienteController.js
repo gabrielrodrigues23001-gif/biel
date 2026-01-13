@@ -56,6 +56,10 @@ exports.createCliente = async (req, res) => {
       });
     }
 
+    if (!clienteData.vendedor_id) {
+      clienteData.vendedor_id = req.userId;
+    }
+
     const cliente = await Cliente.create(clienteData);
 
     res.status(201).json({
@@ -86,6 +90,10 @@ exports.updateCliente = async (req, res) => {
     const { id } = req.params;
     const clienteData = req.body;
 
+    if (req.user?.nivel_acesso !== 'admin') {
+      delete clienteData.vendedor_id;
+    }
+
     const cliente = await Cliente.update(id, clienteData);
 
     if (!cliente) {
@@ -114,7 +122,23 @@ exports.deleteCliente = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = await Cliente.delete(id);
+    const clienteRow = await Cliente.findRowById(id);
+    if (!clienteRow) {
+      return res.status(404).json({
+        success: false,
+        error: 'Cliente nÆo encontrado'
+      });
+    }
+
+    const vendedorId = clienteRow.vendedor_id ? Number(clienteRow.vendedor_id) : null;
+    if (req.user?.nivel_acesso !== 'admin' && vendedorId !== req.userId) {
+      return res.status(403).json({
+        success: false,
+        error: 'Acesso negado'
+      });
+    }
+
+    const result = await Cliente.deleteByRowNumber(clienteRow.__rowNumber);
 
     if (!result.deleted) {
       return res.status(404).json({
