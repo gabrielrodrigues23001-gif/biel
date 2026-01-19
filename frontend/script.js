@@ -1438,13 +1438,11 @@ function updatePedidoTotals() {
         totalDescontos += (quantidade * precoUnitario) - subtotal;
     });
     
-    const totalIPI = (totalProdutos - totalDescontos) * 0.065;
-    const valorTotal = (totalProdutos - totalDescontos) + totalIPI;
+    const valorTotal = totalProdutos - totalDescontos;
     
     updateElementText('totalQuantidade', `${totalQuantidade.toFixed(2)} MT`);
     updateElementText('totalProdutos', totalProdutos.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}));
     updateElementText('totalDescontos', totalDescontos.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}));
-    updateElementText('totalIPI', totalIPI.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}));
     updateElementText('valorTotal', valorTotal.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}));
 }
 
