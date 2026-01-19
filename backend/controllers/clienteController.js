@@ -1,4 +1,5 @@
 const Cliente = require('../data/models/Cliente');
+const VendedorSheet = require('../data/models/VendedorSheet');
 
 exports.getAllClientes = async (req, res) => {
   try {
@@ -56,8 +57,31 @@ exports.createCliente = async (req, res) => {
       });
     }
 
-    if (!clienteData.vendedor_id) {
+    if (!clienteData.vendedor_id && req.userId) {
       clienteData.vendedor_id = req.userId;
+    }
+    if (clienteData.vendedor_id) {
+      const vendedorId = Number(clienteData.vendedor_id);
+      let vendedor = await VendedorSheet.findById(vendedorId);
+      if (!vendedor && req.user && req.user.id === vendedorId) {
+        vendedor = await VendedorSheet.create(
+          {
+            nome: req.user.nome,
+            email: req.user.email,
+            telefone: req.user.telefone,
+            nivel_acesso: req.user.nivel_acesso,
+            comissao: req.user.comissao ?? 0,
+            ativo: true
+          },
+          vendedorId
+        );
+      }
+      if (!vendedor) {
+        return res.status(400).json({
+          success: false,
+          error: 'Vendedor nao encontrado'
+        });
+      }
     }
 
     const cliente = await Cliente.create(clienteData);
@@ -122,15 +146,15 @@ exports.deleteCliente = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const clienteRow = await Cliente.findRowById(id);
-    if (!clienteRow) {
+    const cliente = await Cliente.findById(id);
+    if (!cliente) {
       return res.status(404).json({
         success: false,
         error: 'Cliente nÆo encontrado'
       });
     }
 
-    const vendedorId = clienteRow.vendedor_id ? Number(clienteRow.vendedor_id) : null;
+    const vendedorId = cliente.vendedor_id ? Number(cliente.vendedor_id) : null;
     if (req.user?.nivel_acesso !== 'admin' && vendedorId !== req.userId) {
       return res.status(403).json({
         success: false,
@@ -138,7 +162,7 @@ exports.deleteCliente = async (req, res) => {
       });
     }
 
-    const result = await Cliente.deleteByRowNumber(clienteRow.__rowNumber);
+    const result = await Cliente.delete(id);
 
     if (!result.deleted) {
       return res.status(404).json({
@@ -160,3 +184,4 @@ exports.deleteCliente = async (req, res) => {
     });
   }
 };
+

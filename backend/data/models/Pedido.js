@@ -1,11 +1,11 @@
 const {
-  getAll,
-  findById,
-  appendRow,
-  updateRow,
-  deleteRow,
-  getNextId
-} = require('../../services/sheetsStore');
+  supabase,
+  throwIfError,
+  selectAll,
+  selectById,
+  insertRow,
+  updateById
+} = require('../../services/supabaseStore');
 const Produto = require('./Produto');
 
 function toNumber(value, fallback = 0) {
@@ -40,7 +40,6 @@ class Pedido {
   static async create(pedidoData) {
     const { cliente_id, vendedor_id, condicao_pagamento, observacoes, itens } = pedidoData;
     const now = new Date().toISOString();
-    const pedidoId = await getNextId('pedidos');
     const numeroPedido = `PD${Date.now()}`;
 
     let valorTotal = 0;
@@ -54,10 +53,9 @@ class Pedido {
     valorTotal *= 1.065;
 
     const pedidoRow = {
-      id: pedidoId,
       numero_pedido: numeroPedido,
-      cliente_id,
-      vendedor_id,
+      cliente_id: cliente_id ?? null,
+      vendedor_id: vendedor_id ?? null,
       data_emissao: now,
       valor_total: valorTotal,
       condicao_pagamento: condicao_pagamento || '',
@@ -67,21 +65,16 @@ class Pedido {
       updated_at: now
     };
 
-    await appendRow('pedidos', pedidoRow);
+    const createdPedido = await insertRow('pedidos', pedidoRow, 'id,numero_pedido');
+    const pedidoId = createdPedido.id;
 
-    const itensRows = await getAll('pedido_itens');
-    let nextItemId = itensRows.reduce((max, row) => {
-      const id = Number(row.id);
-      return Number.isNaN(id) ? max : Math.max(max, id);
-    }, 0) + 1;
-
+    const itensRows = [];
     for (const item of itens) {
       const quantidade = toNumberFromInput(item.quantidade);
       const precoUnitario = toNumberFromInput(item.preco_unitario);
       const desconto = toNumberFromInput(item.desconto);
       const subtotal = quantidade * precoUnitario * (1 - desconto / 100);
-      const itemRow = {
-        id: nextItemId++,
+      itensRows.push({
         pedido_id: pedidoId,
         produto_id: item.produto_id,
         quantidade,
@@ -89,9 +82,16 @@ class Pedido {
         desconto,
         subtotal,
         created_at: now
-      };
-      await appendRow('pedido_itens', itemRow);
-      await Produto.updateStock(item.produto_id, quantidade);
+      });
+    }
+
+    if (itensRows.length > 0) {
+      const { error } = await supabase.from('pedido_itens').insert(itensRows);
+      throwIfError(error);
+    }
+
+    for (const item of itens) {
+      await Produto.updateStock(item.produto_id, item.quantidade);
     }
 
     return {
@@ -105,10 +105,12 @@ class Pedido {
   }
 
   static async findAll() {
-    const pedidosRows = await getAll('pedidos');
-    const clientesRows = await getAll('clientes');
-    const vendedoresRows = await getAll('vendedores');
-    const itensRows = await getAll('pedido_itens');
+    const [pedidosRows, clientesRows, vendedoresRows, itensRows] = await Promise.all([
+      selectAll('pedidos'),
+      selectAll('clientes'),
+      selectAll('vendedores'),
+      selectAll('pedido_itens')
+    ]);
 
     const clientesMap = new Map(
       clientesRows.map((cliente) => [Number(cliente.id), cliente.nome_fantasia || ''])
@@ -144,14 +146,16 @@ class Pedido {
   }
 
   static async findById(id) {
-    const pedidoRow = await findById('pedidos', id);
+    const pedidoRow = await selectById('pedidos', id);
     if (!pedidoRow) return null;
 
     const pedido = normalizePedido(pedidoRow);
 
-    const clientesRows = await getAll('clientes');
-    const vendedoresRows = await getAll('vendedores');
-    const produtosRows = await getAll('produtos');
+    const [clientesRows, vendedoresRows, produtosRows] = await Promise.all([
+      selectAll('clientes'),
+      selectAll('vendedores'),
+      selectAll('produtos')
+    ]);
 
     const cliente = clientesRows.find((c) => Number(c.id) === pedido.cliente_id);
     const vendedor = vendedoresRows.find((v) => Number(v.id) === pedido.vendedor_id);
@@ -159,7 +163,11 @@ class Pedido {
       produtosRows.map((produto) => [Number(produto.id), produto])
     );
 
-    const itensRows = await getAll('pedido_itens');
+    const { data: itensRows, error } = await supabase
+      .from('pedido_itens')
+      .select('*')
+      .eq('pedido_id', pedido.id);
+    throwIfError(error);
     const itens = itensRows
       .filter((item) => Number(item.pedido_id) === pedido.id)
       .map((item) => {
@@ -204,31 +212,29 @@ class Pedido {
   }
 
   static async updateStatus(id, status) {
-    const row = await findById('pedidos', id);
+    const row = await selectById('pedidos', id);
     if (!row) return { updated: false };
     const updated = {
       ...row,
       status,
       updated_at: new Date().toISOString()
     };
-    await updateRow('pedidos', row.__rowNumber, updated);
+    await updateById('pedidos', id, updated, 'id');
     return { updated: true };
   }
 
   static async delete(id) {
-    const pedidoRow = await findById('pedidos', id);
+    const pedidoRow = await selectById('pedidos', id);
     if (!pedidoRow) return { deleted: false };
 
-    const itensRows = await getAll('pedido_itens');
-    const itensToDelete = itensRows
-      .filter((item) => Number(item.pedido_id) === Number(id))
-      .sort((a, b) => b.__rowNumber - a.__rowNumber);
+    const { error: itemsError } = await supabase
+      .from('pedido_itens')
+      .delete()
+      .eq('pedido_id', id);
+    throwIfError(itemsError);
 
-    for (const item of itensToDelete) {
-      await deleteRow('pedido_itens', item.__rowNumber);
-    }
-
-    await deleteRow('pedidos', pedidoRow.__rowNumber);
+    const { error: pedidoError } = await supabase.from('pedidos').delete().eq('id', id);
+    throwIfError(pedidoError);
     return { deleted: true };
   }
 }

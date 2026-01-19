@@ -1,2 +1,3 @@
 backend/service-account.json
-backend/service-account.json
+backend/.env
+backend/node_modules/

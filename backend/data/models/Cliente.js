@@ -1,11 +1,12 @@
 const {
-  getAll,
-  findById,
-  appendRow,
-  updateRow,
-  deleteRow,
-  getNextId
-} = require('../../services/sheetsStore');
+  supabase,
+  throwIfError,
+  selectAll,
+  selectById,
+  insertRow,
+  updateById,
+  deleteById
+} = require('../../services/supabaseStore');
 
 function normalizeCliente(row) {
   if (!row) return null;
@@ -22,85 +23,84 @@ function normalizeCliente(row) {
     estado: row.estado || null,
     cep: row.cep || null,
     inscricao_estadual: row.inscricao_estadual || null,
-    ativo: Number(row.ativo) === 1
+    ativo: row.ativo === true || Number(row.ativo) === 1
   };
+}
+
+function normalizeAtivo(value, fallback = true) {
+  if (value === undefined || value === null) return fallback;
+  return Boolean(value);
 }
 
 class Cliente {
   static async create(clienteData) {
     if (clienteData.cnpj) {
-      const existing = await getAll('clientes');
-      const duplicate = existing.find(
-        (row) => String(row.cnpj).trim() === String(clienteData.cnpj).trim()
-      );
-      if (duplicate) {
-        throw new Error('UNIQUE constraint failed: clientes.cnpj');
-      }
+      const cnpj = String(clienteData.cnpj).trim();
+      const { data: duplicate, error } = await supabase
+        .from('clientes')
+        .select('id')
+        .eq('cnpj', cnpj)
+        .maybeSingle();
+      throwIfError(error);
+      if (duplicate) throw new Error('UNIQUE constraint failed: clientes.cnpj');
     }
 
-    const id = await getNextId('clientes');
     const now = new Date().toISOString();
     const payload = {
-      id,
-      vendedor_id: clienteData.vendedor_id ?? '',
-      cnpj: clienteData.cnpj || '',
+      vendedor_id: clienteData.vendedor_id ?? null,
+      cnpj: clienteData.cnpj ? String(clienteData.cnpj).trim() : null,
       razao_social: clienteData.razao_social || '',
       nome_fantasia: clienteData.nome_fantasia || '',
-      email: clienteData.email || '',
-      telefone: clienteData.telefone || '',
-      endereco: clienteData.endereco || '',
-      cidade: clienteData.cidade || '',
-      estado: clienteData.estado || '',
-      cep: clienteData.cep || '',
-      inscricao_estadual: clienteData.inscricao_estadual || '',
-      ativo: clienteData.ativo ?? 1,
+      email: clienteData.email || null,
+      telefone: clienteData.telefone || null,
+      endereco: clienteData.endereco || null,
+      cidade: clienteData.cidade || null,
+      estado: clienteData.estado || null,
+      cep: clienteData.cep || null,
+      inscricao_estadual: clienteData.inscricao_estadual || null,
+      ativo: normalizeAtivo(clienteData.ativo),
       created_at: now,
       updated_at: now
     };
 
-    await appendRow('clientes', payload);
-    return { id, ...clienteData, ativo: payload.ativo };
+    const created = await insertRow('clientes', payload);
+    return normalizeCliente(created);
   }
 
   static async findAll() {
-    const rows = await getAll('clientes');
+    const rows = await selectAll('clientes');
     return rows.map(normalizeCliente);
   }
 
   static async findById(id) {
-    const row = await findById('clientes', id);
+    const row = await selectById('clientes', id);
     return normalizeCliente(row);
   }
 
-  static async findRowById(id) {
-    return findById('clientes', id);
-  }
-
   static async update(id, clienteData) {
-    const row = await findById('clientes', id);
+    const row = await selectById('clientes', id);
     if (!row) return null;
 
     const now = new Date().toISOString();
+    const data = { ...clienteData };
+    if (data.ativo !== undefined) {
+      data.ativo = normalizeAtivo(data.ativo);
+    }
     const updated = {
       ...row,
-      ...clienteData,
+      ...data,
       updated_at: now
     };
 
-    await updateRow('clientes', row.__rowNumber, updated);
+    await updateById('clientes', id, updated, 'id');
     return { id: Number(id), ...clienteData };
   }
 
-  static async deleteByRowNumber(rowNumber) {
-    if (!rowNumber) return { deleted: false };
-    await deleteRow('clientes', rowNumber);
-    return { deleted: true };
-  }
-
   static async delete(id) {
-    const row = await Cliente.findRowById(id);
+    const row = await selectById('clientes', id);
     if (!row) return { deleted: false };
-    return Cliente.deleteByRowNumber(row.__rowNumber);
+    await deleteById('clientes', id);
+    return { deleted: true };
   }
 }
 

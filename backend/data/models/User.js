@@ -1,16 +1,27 @@
 const bcrypt = require('bcryptjs');
 const {
-  getAll,
-  findById,
-  appendRow,
-  updateRow,
-  deleteRow,
-  getNextId
-} = require('../../services/sheetsStore');
+  supabase,
+  throwIfError,
+  selectAll,
+  selectById,
+  insertRow,
+  updateById,
+  deleteById
+} = require('../../services/supabaseStore');
 
 function toNumber(value, fallback = 0) {
   const num = Number(value);
   return Number.isNaN(num) ? fallback : num;
+}
+
+function normalizeEmail(email) {
+  if (!email) return '';
+  return String(email).trim().toLowerCase();
+}
+
+function normalizeAtivo(value, fallback = true) {
+  if (value === undefined || value === null) return fallback;
+  return Boolean(value);
 }
 
 function normalizeUser(row) {
@@ -23,7 +34,7 @@ function normalizeUser(row) {
     nivel_acesso: row.nivel_acesso || 'vendedor',
     telefone: row.telefone || '',
     comissao: toNumber(row.comissao),
-    ativo: Number(row.ativo) === 1,
+    ativo: row.ativo === true || Number(row.ativo) === 1,
     created_at: row.created_at || null,
     updated_at: row.updated_at || null
   };
@@ -41,56 +52,54 @@ class User {
       ativo = 1
     } = userData;
 
-    const existing = await getAll('users');
-    const duplicate = existing.find(
-      (row) => String(row.email).trim().toLowerCase() === String(email).trim().toLowerCase()
-    );
-    if (duplicate) {
-      throw new Error('UNIQUE constraint failed: users.email');
-    }
+    const emailNormalized = normalizeEmail(email);
+    const { data: duplicate, error } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', emailNormalized)
+      .maybeSingle();
+    throwIfError(error);
+    if (duplicate) throw new Error('UNIQUE constraint failed: users.email');
 
-    const id = await getNextId('users');
     const now = new Date().toISOString();
     const hashedPassword = await bcrypt.hash(senha, 10);
 
     const payload = {
-      id,
       nome,
-      email,
+      email: emailNormalized,
       senha: hashedPassword,
       nivel_acesso,
       telefone: telefone || '',
       comissao,
-      ativo,
+      ativo: normalizeAtivo(ativo),
       created_at: now,
       updated_at: now
     };
 
-    await appendRow('users', payload);
-
-    return {
-      id,
-      nome,
-      email,
-      nivel_acesso,
-      telefone,
-      comissao,
-      ativo
-    };
+    const created = await insertRow(
+      'users',
+      payload,
+      'id,nome,email,nivel_acesso,telefone,comissao,ativo'
+    );
+    return created;
   }
 
   static async findByEmail(email) {
-    const rows = await getAll('users');
-    const row = rows.find(
-      (user) => String(user.email).trim().toLowerCase() === String(email).trim().toLowerCase()
-    );
-    if (!row || Number(row.ativo) !== 1) return null;
-    return normalizeUser(row);
+    const emailNormalized = normalizeEmail(email);
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', emailNormalized)
+      .eq('ativo', true)
+      .maybeSingle();
+    throwIfError(error);
+    if (!data) return null;
+    return normalizeUser(data);
   }
 
   static async findById(id) {
-    const row = await findById('users', id);
-    if (!row || Number(row.ativo) !== 1) return null;
+    const row = await selectById('users', id);
+    if (!row || row.ativo !== true) return null;
     const user = normalizeUser(row);
     return {
       id: user.id,
@@ -104,12 +113,12 @@ class User {
   }
 
   static async findByIdIncludeInactive(id) {
-    const row = await findById('users', id);
+    const row = await selectById('users', id);
     return normalizeUser(row);
   }
 
   static async findAll() {
-    const rows = await getAll('users');
+    const rows = await selectAll('users');
     return rows.map((row) => {
       const user = normalizeUser(row);
       return {
@@ -126,7 +135,7 @@ class User {
   }
 
   static async update(id, userData) {
-    const row = await findById('users', id);
+    const row = await selectById('users', id);
     if (!row) return { id };
 
     const data = { ...userData };
@@ -135,6 +144,9 @@ class User {
     } else {
       delete data.senha;
     }
+    if (data.ativo !== undefined) {
+      data.ativo = normalizeAtivo(data.ativo);
+    }
 
     const updated = {
       ...row,
@@ -142,33 +154,37 @@ class User {
       updated_at: new Date().toISOString()
     };
 
-    await updateRow('users', row.__rowNumber, updated);
+    await updateById('users', id, updated, 'id');
     return { id: Number(id), ...userData };
   }
 
   static async deactivate(id) {
-    const row = await findById('users', id);
+    const row = await selectById('users', id);
     if (!row) return { deleted: false };
 
     const updated = {
       ...row,
-      ativo: 0,
+      ativo: false,
       updated_at: new Date().toISOString()
     };
-    await updateRow('users', row.__rowNumber, updated);
+    await updateById('users', id, updated, 'id');
     return { deleted: true };
   }
 
   static async deletePermanent(id) {
-    const row = await findById('users', id);
+    const row = await selectById('users', id);
     if (!row) return { deleted: false };
-    await deleteRow('users', row.__rowNumber);
+    await deleteById('users', id);
     return { deleted: true };
   }
 
   static async hasPedidos(id) {
-    const pedidos = await getAll('pedidos');
-    return pedidos.some((pedido) => Number(pedido.vendedor_id) === Number(id));
+    const { error, count } = await supabase
+      .from('pedidos')
+      .select('id', { count: 'exact', head: true })
+      .eq('vendedor_id', id);
+    throwIfError(error);
+    return Number(count || 0) > 0;
   }
 
   static async comparePassword(plainPassword, hashedPassword) {
